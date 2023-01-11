@@ -34,6 +34,7 @@
 - Parse the input s.t. it is split in computations to do
 - Compute results synchronously
 - Move the computation of results to an asynchronous isolate
+- Implement the CI pipeline
 
 ### Tests
 
@@ -42,3 +43,11 @@
   - Parsing the input
   - Computing the results
 - Write each test **directly** after the implementation of the feature it tests!
+
+### CI
+
+- Set up the Dart environment
+- Build for multiple targets
+  - EXE
+  - JS
+- Run tests
