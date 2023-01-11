@@ -9,6 +9,8 @@ void main(List<String> arguments) async {
 
   String? input = 'ENTER';
 
+  double result = 0.0;
+
   while (input != 'q') {
     // Start the command prompt.
     stdout.write('> ');
@@ -21,8 +23,6 @@ void main(List<String> arguments) async {
       throw StdinException("Got invalid Null input!");
     }
 
-    double? result;
-
     // Handle the input.
     if (input == 'h') {
       dart_calculator.createHelp();
@@ -33,20 +33,17 @@ void main(List<String> arguments) async {
         // Parse the computation into a list.
         // The list starts and ends with a double, and if there was a previous
         // result the first number automatically is the previous result.
-        var computationList = dart_calculator.parseComputation(input, result);
+        var computation = dart_calculator.parseComputation(input, result);
 
-        // Compute the result.
-        Iterable operators = computationList.where((element) => element.runtimeType == String);
-        Iterable numbers = computationList.where((element) => element.runtimeType == double);
-        result = numbers.first;
-        numbers = numbers.skip(1);
+        // Compute the result of the current computation.
+        double? newResult = computation.computeResult();
+        if (newResult != null) {
+          result = newResult;
+          print(result);
+        } else {
+        }
 
-        // for (final pairs in IterableZip([operators, numbers[0:-1], numbers[]])) {
-        //   c.add(Foo(pairs[0], pairs[1]));
-        // }
-      } on dart_calculator.NoPreviousResultException catch (e, s) {
-        print(e);
-      } on dart_calculator.TrailingOperandException catch (e, s) {
+      } on dart_calculator.InvalidComputationException catch (e, s) {
         print(e);
       }
     } else {
