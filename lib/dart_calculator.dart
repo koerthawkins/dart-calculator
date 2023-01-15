@@ -35,6 +35,96 @@ int calculate() {
   return 6 * 7;
 }
 
+class Calculator {
+  String _name;
+  double result;
+
+  Calculator({String name = "Calculator", double result = 0.0}) : _name = name, result = result {}
+
+  bool inputIsValid(String input) {
+    // We don't want to change the actual input.
+    var inputCopy = input;
+
+    // Remove all allowed characters from input.
+    for (final allowedCharacter in allowedCharacters) {
+      inputCopy = inputCopy.replaceAll(allowedCharacter, '');
+    }
+
+    // Remove all numerics from input.
+    inputCopy = inputCopy.replaceAll(RegExp(r"\d"), "");
+
+    // After removing the allowed characters the input must be empty.
+    return inputCopy.isEmpty ? true : false;
+  }
+
+  void printWrongUsage(String input) {
+    print('Got invalid input: $input');
+    createHelp();
+  }
+
+  /// Parse a computation input.
+  ///
+  /// For now we limit the input to a maximum of 2 numbers and 1 operand. This
+  /// way operator precedence can be neglected for now, which makes everything
+  /// easier.
+  Computation parseComputation(String computationString,
+      double previousResult) {
+    // Split the string input into its operands.
+    List<String> operands = computationString.split(" ");
+
+    var computation;
+    // TODO add more checks for numerics and non-numerics
+    if (operands.isEmpty || operands.first == '') {
+      computation = Computation.empty();
+    } else if (operands.length == 1) {
+      if (isNumeric(operands.first)) {
+        computation = Computation.fromOneNumber(double.parse(operands.first));
+      } else {
+        throw InvalidComputationException(
+            "You only supplied an operand!"
+        );
+      }
+    } else if (operands.length == 2) {
+      if (!isNumeric(operands.first)) {
+        computation = Computation(previousResult, double.parse(operands[1]), computationMap[operands[0]]!);
+      }
+    }
+    else if (operands.length == 3) {
+      // Here the first and third operands must be numbers.
+      if (!isNumeric(operands.first) || !isNumeric(operands.last)) {
+        throw InvalidComputationException(
+            "Invalid computation! With 3 operands you need NUMBER FUNCTION NUMBER!"
+        );
+      }
+
+      computation = Computation(double.parse(operands[0]), double.parse(operands[2]), computationMap[operands[1]]!);
+    } else {
+      throw InvalidComputationException(
+          "More than 3 operands are not supported!"
+      );
+    }
+
+    return computation;
+  }
+
+  void computeNewResult(String input, {bool printResult = true}) {
+    // Parse the computation into a list.
+    // The list starts and ends with a double, and if there was a previous
+    // result the first number automatically is the previous result.
+    var computation = parseComputation(input, result);
+
+    // Compute the result of the current computation.
+    // Only store the new result if it is valid.
+    double? newResult = computation.computeResult();
+    if (newResult != null) {
+      result = newResult;
+      if (printResult) {
+        print(result);
+      }
+    }
+  }
+}
+
 void printHelp() {
   print(createHelp());
 }
@@ -44,27 +134,6 @@ String createHelp() {
       '\t- `h`: print help\n'
       '\t- `+-*/`: operators\n'
       '\t- `q`: quit';
-}
-
-bool inputIsValid(String input) {
-  // We don't want to change the actual input.
-  var inputCopy = input;
-
-  // Remove all allowed characters from input.
-  for (final allowedCharacter in allowedCharacters) {
-    inputCopy = inputCopy.replaceAll(allowedCharacter, '');
-  }
-
-  // Remove all numerics from input.
-  inputCopy = inputCopy.replaceAll(RegExp(r"\d"), "");
-
-  // After removing the allowed characters the input must be empty.
-  return inputCopy.isEmpty ? true : false;
-}
-
-void printWrongUsage(String input) {
-  print('Got invalid input: $input');
-  createHelp();
 }
 
 bool isNumeric(String s) {
@@ -109,51 +178,6 @@ extension X<T> on List<T> {
 
   List<T> everyNthStartingWith(int n, int start) =>
       [for (var i = start; i < length; i += n) this[i]];
-}
-
-/// Parse a computation input.
-///
-/// For now we limit the input to a maximum of 2 numbers and 1 operand. This
-/// way operator precedence can be neglected for now, which makes everything
-/// easier.
-Computation parseComputation(String computationString,
-    double previousResult) {
-  // Split the string input into its operands.
-  List<String> operands = computationString.split(" ");
-
-  var computation;
-  // TODO add more checks for numerics and non-numerics
-  if (operands.isEmpty || operands.first == '') {
-    computation = Computation.empty();
-  } else if (operands.length == 1) {
-    if (isNumeric(operands.first)) {
-      computation = Computation.fromOneNumber(double.parse(operands.first));
-    } else {
-      throw InvalidComputationException(
-          "You only supplied an operand!"
-      );
-    }
-  } else if (operands.length == 2) {
-    if (!isNumeric(operands.first)) {
-      computation = Computation(previousResult, double.parse(operands[1]), computationMap[operands[0]]!);
-    }
-  }
-  else if (operands.length == 3) {
-    // Here the first and third operands must be numbers.
-    if (!isNumeric(operands.first) || !isNumeric(operands.last)) {
-      throw InvalidComputationException(
-          "Invalid computation! With 3 operands you need NUMBER FUNCTION NUMBER!"
-      );
-    }
-
-    computation = Computation(double.parse(operands[0]), double.parse(operands[2]), computationMap[operands[1]]!);
-  } else {
-    throw InvalidComputationException(
-        "More than 3 operands are not supported!"
-    );
-  }
-
-  return computation;
 }
 
 // List<List<dynamic>> parseComputation(String computationString,
