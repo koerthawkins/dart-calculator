@@ -1,3 +1,5 @@
+import 'dart:isolate';
+
 const allowedCharacters = ['+', '-', '*', '/', ' ', 'q', 'h', '\n'];
 final computationMap = {
   '+': (double a, double b) => a + b,
@@ -14,18 +16,19 @@ class Computation {
   ComputationFunction function;
   int nValidOperands;
 
-  Computation(this.operand1, this.operand2, this.function)
-      : nValidOperands = 3;
+  Computation(this.operand1, this.operand2, this.function) : nValidOperands = 3;
 
+  /// The computation here is just any arbitrary computation.
   Computation.empty()
       : operand1 = 0.0,
         operand2 = 0.0,
         function = computationMap['+']!,
         nValidOperands = 0;
 
+  /// The computation here is just any arbitrary computation.
   Computation.fromOneNumber(this.operand1)
       : operand2 = 0.0,
-        function = computationMap['+']!,  // This is just any computation
+        function = computationMap['+']!,
         nValidOperands = 1;
 
   double? computeResult() {
@@ -41,8 +44,11 @@ class Computation {
 
 class Calculator {
   double result;
+  final ReceivePort receivePort;
 
-  Calculator({String name = "Calculator", this.result = 0.0});
+
+  Calculator({String name = "Calculator", this.result = 0.0})
+      : receivePort = ReceivePort() {}
 
   bool inputIsValid(String input) {
     // We don't want to change the actual input.
@@ -65,12 +71,59 @@ class Calculator {
     createHelp();
   }
 
+  Future<void> computeNewResult(String input, {bool printResult = true}) async {
+    // We need to copy the current result to a static variable first, as
+    // sending class members across an isolate won't work.
+    double currentResult = result;
+    result = await Isolate.run(() => _computeNewResultASync(input, currentResult, printResult: printResult));
+  }
+
+  void computeNewResultSync(String input, {bool printResult = true}) async {
+    // Parse the computation into a list.
+    // The list starts and ends with a double, and if there was a previous
+    // result the first number automatically is the previous result.
+    var computation = parseComputation(input, result);
+
+    // Compute the result of the current computation.
+    // Only store the new result if it is valid.
+    double? newResult = computation.computeResult();
+    if (newResult != null) {
+      result = newResult;
+      if (printResult) {
+        print(result);
+      }
+    }
+  }
+
+  void startProcess() async {
+    /// Port for the isolate to receive messages.
+  }
+
+  static Future<double> _computeNewResultASync(input, result, {bool printResult = true}) async {
+    // Parse the computation into a list.
+    // The list starts and ends with a double, and if there was a previous
+    // result the first number automatically is the previous result.
+    var computation = parseComputation(input, result);
+
+    // Compute the result of the current computation.
+    // Only store the new result if it is valid.
+    double? newResult = computation.computeResult();
+    if (newResult != null) {
+      result = newResult;
+      if (printResult) {
+        print(result);
+      }
+    }
+
+    return result;
+  }
+
   /// Parse a computation input.
   ///
   /// For now we limit the input to a maximum of 2 numbers and 1 operand. This
   /// way operator precedence can be neglected for now, which makes everything
   /// easier.
-  Computation parseComputation(
+  static Computation parseComputation(
       String computationString, double previousResult) {
     // Split the string input into its operands.
     List<String> operands = computationString.split(" ");
@@ -105,23 +158,6 @@ class Calculator {
     }
 
     return computation;
-  }
-
-  void computeNewResult(String input, {bool printResult = true}) {
-    // Parse the computation into a list.
-    // The list starts and ends with a double, and if there was a previous
-    // result the first number automatically is the previous result.
-    var computation = parseComputation(input, result);
-
-    // Compute the result of the current computation.
-    // Only store the new result if it is valid.
-    double? newResult = computation.computeResult();
-    if (newResult != null) {
-      result = newResult;
-      if (printResult) {
-        print(result);
-      }
-    }
   }
 }
 
@@ -158,3 +194,4 @@ extension X<T> on List<T> {
   List<T> everyNthStartingWith(int n, int start) =>
       [for (var i = start; i < length; i += n) this[i]];
 }
+

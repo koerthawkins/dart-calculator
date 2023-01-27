@@ -30,7 +30,7 @@ void main(List<String> arguments) async {
       exit(0);
     } else if (calculator.inputIsValid(input)) {
       try {
-        calculator.computeNewResult(input);
+        await calculator.computeNewResult(input);
       } on dart_calculator.InvalidComputationException catch (e, s) {
         print(e);
       }
@@ -38,4 +38,6 @@ void main(List<String> arguments) async {
       calculator.printWrongUsage(input);
     }
   }
+
+  exit(0);
 }
