@@ -31,6 +31,18 @@ class Computation {
         function = computationMap['+']!,
         nValidOperands = 1;
 
+  @override
+  bool operator ==(other) {
+    if (other is Computation)
+    {
+      return operand1 == other.operand1 && operand2 == other.operand2 && function == other.function;
+    }
+    else
+    {
+      return false;
+    }
+  }
+
   double? computeResult() {
     if (nValidOperands == 3) {
       return function(operand1, operand2);
@@ -45,7 +57,6 @@ class Computation {
 class Calculator {
   double result;
   final ReceivePort receivePort;
-
 
   Calculator({String name = "Calculator", this.result = 0.0})
       : receivePort = ReceivePort() {}
@@ -75,7 +86,8 @@ class Calculator {
     // We need to copy the current result to a static variable first, as
     // sending class members across an isolate won't work.
     double currentResult = result;
-    result = await Isolate.run(() => _computeNewResultASync(input, currentResult, printResult: printResult));
+    result = await Isolate.run(() =>
+        _computeNewResultASync(input, currentResult, printResult: printResult));
   }
 
   void computeNewResultSync(String input, {bool printResult = true}) async {
@@ -99,7 +111,8 @@ class Calculator {
     /// Port for the isolate to receive messages.
   }
 
-  static Future<double> _computeNewResultASync(input, result, {bool printResult = true}) async {
+  static Future<double> _computeNewResultASync(input, result,
+      {bool printResult = true}) async {
     // Parse the computation into a list.
     // The list starts and ends with a double, and if there was a previous
     // result the first number automatically is the previous result.
@@ -125,8 +138,21 @@ class Calculator {
   /// easier.
   static Computation parseComputation(
       String computationString, double previousResult) {
-    // Split the string input into its operands.
+    // Extract all operands.
     List<String> operands = computationString.split(" ");
+
+    // Check that the input string was correctly formatted.
+    // If e.g. whitespaces were not properly inserted, a number will be
+    // mixed together with an operator.
+    // An operator before a number is valid though.
+    final numberFollowedByOperatorRegExp = RegExp(r'[0-9]+[+-/*]');
+    for (final operand in operands)
+    {
+      if (numberFollowedByOperatorRegExp.hasMatch(operand))
+        {
+          throw InvalidComputationException("Computation '$computationString' is badly formatted!");
+        }
+    }
 
     // The default computation is an empty computation.
     var computation = Computation.empty();
@@ -139,6 +165,11 @@ class Calculator {
         throw InvalidComputationException("You only supplied an operand!");
       }
     } else if (operands.length == 2) {
+      // We can not have 2 numbers.
+      if (isNumeric(operands.first) && isNumeric(operands[1]))
+      {
+        throw InvalidComputationException("You supplied two numbers!");
+      }
       if (!isNumeric(operands.first)) {
         computation = Computation(previousResult, double.parse(operands[1]),
             computationMap[operands[0]]!);
@@ -194,4 +225,3 @@ extension X<T> on List<T> {
   List<T> everyNthStartingWith(int n, int start) =>
       [for (var i = start; i < length; i += n) this[i]];
 }
-

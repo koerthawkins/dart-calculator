@@ -20,16 +20,16 @@ void main() {
 
   // Test whether there are all supported operators in computationMap.
   group('all supported operators are in computationMap', () {
-    test ('+', () {
+    test('+', () {
       expect(computationMap.keys, contains('+'));
     });
-    test ('-', () {
+    test('-', () {
       expect(computationMap.keys, contains('+'));
     });
-    test ('*', () {
+    test('*', () {
       expect(computationMap.keys, contains('+'));
     });
-    test ('/', () {
+    test('/', () {
       expect(computationMap.keys, contains('+'));
     });
   });
@@ -100,5 +100,28 @@ void main() {
     expect([1, 2, 3, 4, 5].everyNthStartingWith(2, 0), equals([1, 3, 5]));
     expect([1, 2, 3, 4, 5].everyNthStartingWith(2, 1), equals([2, 4]));
     expect([1, 2, 3, 4, 5].everyNthStartingWith(2, 2), equals([3, 5]));
+  });
+
+  test('parseComputation', () {
+    // Check the normal operators.
+    expect(Calculator.parseComputation("1 + 2", 0.0),
+        equals(Computation(1, 2, computationMap['+']!)));
+    expect(Calculator.parseComputation("1 - 2", 0.0),
+        equals(Computation(1, 2, computationMap['-']!)));
+    expect(Calculator.parseComputation("1 * 2", 0.0),
+        equals(Computation(1, 2, computationMap['*']!)));
+    expect(Calculator.parseComputation("1 / 2", 0.0),
+        equals(Computation(1, 2, computationMap['/']!)));
+
+    // Check incorrectly formatted computation strings.
+    // NOTE: This test only works when using a lambda expression! Weird ...
+    expect(() => Calculator.parseComputation("1+ 2", 0.0),
+        throwsA(isA<InvalidComputationException>()));
+    expect(() => Calculator.parseComputation("1 -2", 0.0),
+        throwsA(isA<InvalidComputationException>()));
+    expect(() => Calculator.parseComputation("1*2", 0.0),
+        throwsA(isA<InvalidComputationException>()));
+    expect(() => Calculator.parseComputation("    1   /  2  ", 0.0),
+        throwsA(isA<InvalidComputationException>()));
   });
 }
