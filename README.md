@@ -1,10 +1,19 @@
-A sample command-line application with an entrypoint in `bin/`, library code
-in `lib/`, and example unit test in `test/`.
+# dart-calculator
+
+A simple calculator app using the `Dart` language.
+
+It can add, subtract, multiply and divide two numbers. You can also re-use previous results.
 
 ### How to run
 
-Run all tests in Chrome browser and the Dart VM with proper logging:
+Run the application:
 
 ```bash
+dart run
+```
+
+Run all tests in Chrome browser and the Dart VM with proper logging:
+
+```bashn
 dart test -r expanded -p chrome
 ```
